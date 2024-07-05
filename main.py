@@ -1,12 +1,13 @@
 from fpdf import FPDF
 import os
 from time import strftime
+import json
 
 class PDF(FPDF):
     def footer(self):
         self.set_font('poppins-regular', '', 6)
         self.set_y(-40)
-        self.multi_cell(0, 3, "Web3DPrint Ltd (Company No. [INSERT NUMBER]) is a platform connecting makers and 3D printer owners worldwide. Our registered address is [INSERT UK ADDRESS]. Web3DPrint Ltd is registered in England and Wales. We facilitate transactions between users but do not directly provide 3D printing services. We are not responsible for the quality of 3D printed items or any damages resulting from their use. Payment processing is handled by Stripe Payments UK Ltd, which is authorised by the Financial Conduct Authority under the Payment Services Regulations 2017 for the provision of payment services (Firm Reference Number: 900461). Web3DPrint Ltd is committed to protecting your personal data in accordance with applicable data protection laws, including the UK General Data Protection Regulation (UK GDPR) and the Data Protection Act 2018. For disputes related to 3D printing services, please contact the service provider directly. For platform-related issues, contact our customer support at [INSERT CONTACT INFORMATION]. By using Web3DPrint, you agree to our Terms of Service and Privacy Policy, available at web3dprint.com.", 0, 'L', False)
+        self.multi_cell(0, 3, "Web3DPrint Ltd (Company No. [INSERT NUMBER]) is a platform connecting makers and 3D printer owners worldwide. Our registered address is [INSERT UK ADDRESS]. Web3DPrint Ltd is registered in England and Wales. We facilitate transactions between users but do not directly provide 3D printing services. We are not responsible for the quality of 3D printed items or any damages resulting from their use. Payment processing is handled by Stripe Payments UK Ltd, which is authorised by the Financial Conduct Authority under the Payment Services Regulations 2017 for the provision of payment services (Firm Reference Number: 900461). Web3DPrint Ltd is committed to protecting your personal data in accordance with applicable data protection laws, including the UK General Data Protection Regulation (UK GDPR) and the Data Protection Act 2018. For disputes related to 3D printing services, please contact the service provider directly. For platform-related issues, contact our customer support at SUPPORT@WEB3DPRINT.COM. By using Web3DPrint, you agree to our Terms of Service and Privacy Policy, available at WEB3DPRINT.COM.", 0, 'L', False)
         self.set_y(-15)
         self.set_font('poppins-medium', '', 8)
         self.cell(0, 10, f"{strftime('%Y')} Web3DPrint Ltd. All rights reserved.", 0, 0, 'L')
@@ -112,21 +113,42 @@ def add_order_summary(pdf, products):
     pdf.line(10, end_y, 10 + page_width, end_y)
     
 
-def generate_pdf(output_filename):
+def generate_pdf(json_data):
+    # Load JSON data
+    data = json.loads(json_data)
+
+    # Extract information from JSON
+    output_filename = data.get('output_filename', 'invoice.pdf')
+    full_name = data.get('full_name', '')
+    address = data.get('address', '')
+    order_id = data.get('order_id', '')
+    date_of_order = data.get('date_of_order', '')
+    payment_terms = data.get('payment_terms', '')
+    products = data.get('products', [])
+
+    # Generate PDF
     pdf = setup_pdf()
     add_header(pdf)
-    add_customer_info(pdf, "OLIVER LESLIE BARROW", "6 Lewis Cubitt Walk\nKings Cross, London\nN1C 4DT",
-                      "65d350e0c6e3be", "12/08/2024", "Apple Pay")
-    
-    products = [
-        {"name": "Custom Phone Stand", "quantity": 2, "unit_price": "£15.99", "tax": "£6.40", "total": "£38.38"},
-        {"name": "Decorative Vase", "quantity": 1, "unit_price": "£29.50", "tax": "£5.90", "total": "£35.40"},
-        {"name": "3D Printed Chess Set", "quantity": 1, "unit_price": "£49.99", "tax": "£10.00", "total": "£59.99"},
-        {"name": "Personalized Pet Tag", "quantity": 3, "unit_price": "£9.99", "tax": "£6.00", "total": "£35.97"},
-    ]
-    
+    add_customer_info(pdf, full_name, address, order_id, date_of_order, payment_terms)
     add_order_summary(pdf, products)
     pdf.output(output_filename)
 
 if __name__ == "__main__":
-    generate_pdf("invoice.pdf")
+    # Sample JSON input
+    json_input = '''
+    {
+        "output_filename": "JSON_INVOICE.pdf",
+        "full_name": "OLIVER LESLIE BARROW",
+        "address": "6 Lewis Cubitt Walk\\nKings Cross, London\\nN1C 4DT",
+        "order_id": "65d350e0c6e3be",
+        "date_of_order": "12/08/2024",
+        "payment_terms": "Apple Pay",
+        "products": [
+            {"name": "Custom Phone Stand", "quantity": 2, "unit_price": "£15.99", "tax": "£6.40", "total": "£38.38"},
+            {"name": "Decorative Vase", "quantity": 1, "unit_price": "£29.50", "tax": "£5.90", "total": "£35.40"},
+            {"name": "3D Printed Chess Set", "quantity": 1, "unit_price": "£49.99", "tax": "£10.00", "total": "£59.99"},
+            {"name": "Personalized Pet Tag", "quantity": 3, "unit_price": "£9.99", "tax": "£6.00", "total": "£35.97"}
+        ]
+    }
+    '''
+    generate_pdf(json_input)
