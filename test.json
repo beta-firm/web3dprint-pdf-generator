@@ -4,10 +4,38 @@
     "order_id": "65d350e0c6e3be",
     "date_of_order": "12/08/2024",
     "payment_terms": "Apple Pay",
+    "currency": "£",
     "products": [
-        {"name": "Custom Phone Stand", "quantity": 2, "unit_price": "£15.99", "tax": "£6.40", "total": "£38.38"},
-        {"name": "Decorative Vase", "quantity": 1, "unit_price": "£29.50", "tax": "£5.90", "total": "£35.40"},
-        {"name": "3D Printed Chess Set", "quantity": 1, "unit_price": "£49.99", "tax": "£10.00", "total": "£59.99"},
-        {"name": "Personalized Pet Tag", "quantity": 3, "unit_price": "£9.99", "tax": "£6.00", "total": "£35.97"}
-    ]
+        {
+            "name": "Custom Phone Stand",
+            "quantity": 2,
+            "unit_price": "15.99",
+            "tax": "6.40",
+            "total": "38.38",
+            "material": "PLA",
+            "color": "Black",
+            "manufacturing_process": "FDM",
+            "finish": "Standard"
+        },
+        {
+            "name": "Decorative Vase",
+            "quantity": 1,
+            "unit_price": "29.50",
+            "tax": "5.90",
+            "total": "35.40",
+            "material": "PLA",
+            "color": "Black",
+            "manufacturing_process": "FDM",
+            "finish": "Standard"
+        }
+    ],
+    "delivery_method": "Express Shipping",
+    "estimated_delivery_date": "15/08/2024",
+    "shipping_address": "6 Lewis Cubitt Walk\nKings Cross, London\nN1C 4DT",
+    "tracking_number": "TRACK123456",
+    "special_instructions": "Please leave with neighbor if not home",
+    "material": "PLA",
+    "color": "Black",
+    "manufacturing_process": "FDM",
+    "finish": "Standard"
 }

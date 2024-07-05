@@ -43,76 +43,129 @@ def add_header(pdf):
     pdf.cell(page_width, 4, "Web3DPrint Limited", 0, 1, 'R')
     pdf.ln(10)
 
-def add_customer_info(pdf, name, address, order_id, date_of_order, payment_terms):
+def add_customer_info(pdf, name, address, order_id, date_of_order, payment_terms, currency):
     page_width = pdf.w - 2 * pdf.l_margin
     pdf.set_font('poppins-medium', size=11)
     pdf.cell(page_width, 10, name, 0, 1, 'L')
-    pdf.set_font('poppins-medium', size=9)
-    pdf.multi_cell(page_width, 5, address, 0, 'L')
+    pdf.set_font('poppins-medium', size=8)
+    pdf.multi_cell(page_width, 4, address, 0, 'L')
     pdf.ln(0)
     column_width = page_width / 6
     pdf.set_x(pdf.w - pdf.r_margin - 2 * column_width)
-    pdf.set_font('poppins-medium', size=9)
-    pdf.cell(column_width, 5, "Order Number:", 0, 0, 'L')
-    pdf.set_font('poppins-regular', size=9)
-    pdf.cell(column_width, 5, order_id, 0, 1, 'L')
+    pdf.set_font('poppins-medium', size=8)
+    pdf.cell(column_width, 4, "Order Number:", 0, 0, 'L')
+    pdf.set_font('poppins-regular', size=8)
+    pdf.cell(column_width, 4, order_id, 0, 1, 'L')
     pdf.set_x(pdf.w - pdf.r_margin - 2 * column_width)
-    pdf.set_font('poppins-medium', size=9)
-    pdf.cell(column_width, 5, "Date Of Order:", 0, 0, 'L')
-    pdf.set_font('poppins-regular', size=9)
-    pdf.cell(column_width, 5, date_of_order, 0, 1, 'L')
+    pdf.set_font('poppins-medium', size=8)
+    pdf.cell(column_width, 4, "Date Of Order:", 0, 0, 'L')
+    pdf.set_font('poppins-regular', size=8)
+    pdf.cell(column_width, 4, date_of_order, 0, 1, 'L')
     pdf.set_x(pdf.w - pdf.r_margin - 2 * column_width)
-    pdf.set_font('poppins-medium', size=9)
-    pdf.cell(column_width, 5, "Payment Terms:", 0, 0, 'L')
-    pdf.set_font('poppins-regular', size=9)
-    pdf.cell(column_width, 5, payment_terms, 0, 1, 'L')
+    pdf.set_font('poppins-medium', size=8)
+    pdf.cell(column_width, 4, "Payment Method:", 0, 0, 'L')
+    pdf.set_font('poppins-regular', size=8)
+    pdf.cell(column_width, 4, payment_terms, 0, 1, 'L')
+    pdf.set_x(pdf.w - pdf.r_margin - 2 * column_width)
+    pdf.set_font('poppins-medium', size=8)
+    pdf.cell(column_width, 4, "Currency:", 0, 0, 'L')
+    pdf.set_font('poppins-regular', size=8)
+    pdf.cell(column_width, 4, currency, 0, 1, 'L')
     pdf.ln(10)
 
-def add_order_summary(pdf, products):
+def add_delivery_info(pdf, delivery_method, estimated_delivery_date, shipping_address, tracking_number, special_instructions):
     page_width = pdf.w - 2 * pdf.l_margin
+    pdf.set_font('poppins-medium', size=10)  # Reduced from 12
+    pdf.cell(0, 8, "Delivery Information", 0, 1, 'L')  # Reduced height from 10 to 8
+    
+    pdf.set_font('poppins-medium', size=8)  # Reduced from 9
+    pdf.cell(page_width/4, 4, "Delivery Method:", 0, 0, 'L')  # Reduced height from 5 to 4
+    pdf.set_font('poppins-regular', size=8)  # Reduced from 9
+    pdf.cell(page_width/4, 4, delivery_method, 0, 1, 'L')
+    
+    pdf.set_font('poppins-medium', size=8)
+    pdf.cell(page_width/4, 4, "Estimated Delivery Date:", 0, 0, 'L')
+    pdf.set_font('poppins-regular', size=8)
+    pdf.cell(page_width/4, 4, estimated_delivery_date, 0, 1, 'L')
+    
+    if tracking_number:
+        pdf.set_font('poppins-medium', size=8)
+        pdf.cell(page_width/4, 4, "Tracking Number:", 0, 0, 'L')
+        pdf.set_font('poppins-regular', size=8)
+        pdf.cell(page_width/4, 4, tracking_number, 0, 1, 'L')
+    
+    pdf.set_font('poppins-medium', size=8)
+    pdf.cell(page_width/4, 4, "Shipping Address:", 0, 1, 'L')
+    pdf.set_font('poppins-regular', size=8)
+    pdf.multi_cell(page_width, 4, shipping_address, 0, 'L')
+    pdf.ln(0)  # Reduced from 5
+    
+    if special_instructions:
+        pdf.set_font('poppins-medium', size=8)
+        pdf.cell(page_width/2, 4, "Special Instructions:", 0, 1, 'L')
+        pdf.set_font('poppins-regular', size=8)
+        pdf.multi_cell(page_width, 4, special_instructions, 0, 'L')
+    
+    pdf.ln(6)  # Reduced from 10
+
+def add_order_summary(pdf, products, currency):
+    page_width = pdf.w - 2 * pdf.l_margin
+    
+    # Check if there's enough space on the current page
+    if pdf.get_y() > 180:  # Adjust this value as needed
+        pdf.add_page()
+    
     column_widths = [page_width * 0.4, page_width * 0.15, page_width * 0.15, page_width * 0.15, page_width * 0.15]
     
-    pdf.set_font('poppins-medium', size=12)
-    pdf.cell(0, 10, "Items Ordered", 0, 1, 'L')
+    pdf.set_font('poppins-medium', size=10)  # Reduced from 12
+    pdf.cell(0, 8, "Items Ordered", 0, 1, 'L')  # Reduced height from 10 to 8
     
-    pdf.set_font('poppins-medium', size=10)
+    pdf.set_font('poppins-medium', size=9)  # Reduced from 10
     pdf.set_draw_color(64, 64, 64)
     pdf.set_line_width(0.5)
     
     headers = ['Product', 'Quantity', 'Price', 'Tax', 'Total']
     for i, header in enumerate(headers):
-        pdf.cell(column_widths[i], 10, header, border=0, align='LCCCR'[i])
-    pdf.ln(10)
+        pdf.cell(column_widths[i], 8, header, border=0, align='LCCCR'[i])  # Reduced height from 10 to 8
+    pdf.ln(8)
     
     end_y = pdf.get_y()
     pdf.line(10, end_y, 10 + page_width, end_y)
     
-    pdf.set_font('poppins-regular', size=8)
+    pdf.set_font('poppins-regular', size=7)  # Reduced from 8
     pdf.set_line_width(0.25)
     
     total_amount = 0
     for product in products:
         for i, key in enumerate(['name', 'quantity', 'unit_price', 'tax', 'total']):
             value = str(product[key]) if key == 'quantity' else product[key]
-            pdf.cell(column_widths[i], 10, value, border=0, align='LCCCR'[i])
+            if key in ['unit_price', 'tax', 'total']:
+                value = f"{currency}{value.lstrip('£')}"
+            pdf.cell(column_widths[i], 8, value, border=0, align='LCCCR'[i])  # Reduced height from 10 to 8
             if key == 'total':
-                total_amount += float(value.strip('£'))
-        pdf.ln(10)
+                total_amount += float(value.lstrip(currency))
+        pdf.ln(8)
         end_y = pdf.get_y()
         pdf.line(10, end_y, 10 + page_width, end_y)
 
-    pdf.set_font('poppins-regular', size=8)
-    formatted_total_amount = "£" + "{:.2f}".format(total_amount)
-    pdf.cell(column_widths[4], 10, "Total Amount", border=0, align='L')
+    pdf.set_font('poppins-medium', size=9)  # Reduced from 10
+    formatted_total_amount = f"{currency}{total_amount:.2f}"
+    pdf.cell(column_widths[4], 8, "Total Amount", border=0, align='L')  # Reduced height from 10 to 8
     
     for i in range(3):
-        pdf.cell(column_widths[i], 10, "", border=0)
+        pdf.cell(column_widths[i], 8, "", border=0)
     
-    pdf.cell(column_widths[4], 10, formatted_total_amount, border=0, align='R')
-    pdf.ln(10)
+    pdf.cell(column_widths[4], 8, formatted_total_amount, border=0, align='R')
+    pdf.ln(8)
     
     end_y = pdf.get_y()
     pdf.line(10, end_y, 10 + page_width, end_y)
+
+    pdf.ln(6)  # Reduced from 10
+    pdf.set_font('poppins-regular', size=7)  # Reduced from 8
+    pdf.multi_cell(0, 4, "Thank you for your order! For questions about this order, please contact our customer support at support@web3dprint.com", 0, 'L')
+    pdf.ln(3)  # Reduced from 5
+    pdf.multi_cell(0, 4, "For more information about our services and policies, please visit our website at WEB3DPRINT.COM", 0, 'L')
 
 @app.route('/generate_pdf', methods=['POST', 'OPTIONS'])
 def generate_pdf_api():
@@ -124,26 +177,36 @@ def generate_pdf_api():
         if not json_data:
             return "No JSON data provided", 400
 
+        # Extract existing information
         full_name = json_data.get('full_name', '')
         address = json_data.get('address', '')
         order_id = json_data.get('order_id', '')
         date_of_order = json_data.get('date_of_order', '')
         payment_terms = json_data.get('payment_terms', '')
         products = json_data.get('products', [])
+        currency = json_data.get('currency', '£')  # Default to GBP if not provided
+
+        # Extract new delivery information
+        delivery_method = json_data.get('delivery_method', 'Standard Shipping')
+        estimated_delivery_date = json_data.get('estimated_delivery_date', 'Not available')
+        shipping_address = json_data.get('shipping_address', address)  # Default to billing address if not provided
+        tracking_number = json_data.get('tracking_number', '')
+        special_instructions = json_data.get('special_instructions', '')
 
         with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as tmp_file:
             temp_filename = tmp_file.name
 
         pdf = setup_pdf()
         add_header(pdf)
-        add_customer_info(pdf, full_name, address, order_id, date_of_order, payment_terms)
-        add_order_summary(pdf, products)
+        add_customer_info(pdf, full_name, address, order_id, date_of_order, payment_terms, currency)
+        add_delivery_info(pdf, delivery_method, estimated_delivery_date, shipping_address, tracking_number, special_instructions)
+        add_order_summary(pdf, products, currency)
         pdf.output(temp_filename)
 
         return send_file(
             temp_filename,
             as_attachment=True,
-            download_name=f'invoice_{order_id}.pdf',
+            download_name=f'order_summary_{order_id}.pdf',
             mimetype='application/pdf'
         )
 
