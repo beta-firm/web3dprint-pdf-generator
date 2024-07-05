@@ -31,9 +31,10 @@ def setup_pdf():
     return pdf
 
 def add_header(pdf):
+    pdf.ln(10)  # Add a 10mm space at the top
     page_width = pdf.w - 2 * pdf.l_margin
     half_page_width = page_width / 2
-    pdf.set_font('poppins-medium', size=18)
+    pdf.set_font('poppins-medium', size=22)
     pdf.set_x(10)
     pdf.cell(half_page_width, 10, "Web3DPrint", 0, 0, 'L')
     pdf.set_x(10 + half_page_width)
@@ -75,6 +76,7 @@ def add_customer_info(pdf, name, address, order_id, date_of_order, payment_terms
 
 def add_delivery_info(pdf, delivery_method, estimated_delivery_date, shipping_address, tracking_number, special_instructions):
     page_width = pdf.w - 2 * pdf.l_margin
+    pdf.ln(0)
     pdf.set_font('poppins-medium', size=10)  # Reduced from 12
     pdf.cell(0, 8, "Delivery Information", 0, 1, 'L')  # Reduced height from 10 to 8
     
@@ -108,63 +110,74 @@ def add_delivery_info(pdf, delivery_method, estimated_delivery_date, shipping_ad
     
     pdf.ln(6)  # Reduced from 10
 
-def add_order_summary(pdf, products, currency):
+def add_order_summary(pdf, products, currency, currency_symbol):
     page_width = pdf.w - 2 * pdf.l_margin
     
     # Check if there's enough space on the current page
     if pdf.get_y() > 180:  # Adjust this value as needed
         pdf.add_page()
     
-    column_widths = [page_width * 0.4, page_width * 0.15, page_width * 0.15, page_width * 0.15, page_width * 0.15]
+    column_widths = [page_width * 0.25, page_width * 0.25, page_width * 0.1, page_width * 0.13, page_width * 0.13, page_width * 0.14]
     
-    pdf.set_font('poppins-medium', size=10)  # Reduced from 12
-    pdf.cell(0, 8, "Items Ordered", 0, 1, 'L')  # Reduced height from 10 to 8
+    pdf.set_font('poppins-medium', size=10)
+    pdf.cell(0, 8, "Items Ordered", 0, 1, 'L')
     
-    pdf.set_font('poppins-medium', size=9)  # Reduced from 10
+    pdf.set_font('poppins-medium', size=8)
     pdf.set_draw_color(64, 64, 64)
     pdf.set_line_width(0.5)
     
-    headers = ['Product', 'Quantity', 'Price', 'Tax', 'Total']
+    headers = ['Product', 'Description', 'Quantity', 'Price', 'Tax', 'Total']
+    alignments = ['L', 'L', 'C', 'R', 'R', 'R']
     for i, header in enumerate(headers):
-        pdf.cell(column_widths[i], 8, header, border=0, align='LCCCR'[i])  # Reduced height from 10 to 8
+        pdf.cell(column_widths[i], 8, header, 0, 0, alignments[i])
     pdf.ln(8)
     
-    end_y = pdf.get_y()
-    pdf.line(10, end_y, 10 + page_width, end_y)
+    # Separator line after headers
+    pdf.line(pdf.l_margin, pdf.get_y(), pdf.w - pdf.r_margin, pdf.get_y())
     
-    pdf.set_font('poppins-regular', size=7)  # Reduced from 8
+    pdf.set_font('poppins-regular', size=7)
     pdf.set_line_width(0.25)
     
     total_amount = 0
     for product in products:
-        for i, key in enumerate(['name', 'quantity', 'unit_price', 'tax', 'total']):
-            value = str(product[key]) if key == 'quantity' else product[key]
-            if key in ['unit_price', 'tax', 'total']:
-                value = f"{currency}{value.lstrip('£')}"
-            pdf.cell(column_widths[i], 8, value, border=0, align='LCCCR'[i])  # Reduced height from 10 to 8
-            if key == 'total':
-                total_amount += float(value.lstrip(currency))
-        pdf.ln(8)
-        end_y = pdf.get_y()
-        pdf.line(10, end_y, 10 + page_width, end_y)
+        # Product name
+        pdf.cell(column_widths[0], 8, product['name'], 0, 0, 'L')
+        
+        # Description (material info)
+        material_info = f"{product['material']}, {product['color']}, {product['manufacturing_process']}, {product['finish']}"
+        pdf.cell(column_widths[1], 8, material_info, 0, 0, 'L')
+        
+        # Quantity
+        pdf.cell(column_widths[2], 8, str(product['quantity']), 0, 0, 'C')
+        
+        # Price
+        pdf.cell(column_widths[3], 8, f"{currency_symbol}{product['unit_price']}", 0, 0, 'R')
+        
+        # Tax
+        pdf.cell(column_widths[4], 8, f"{currency_symbol}{product['tax']}", 0, 0, 'R')
+        
+        # Total
+        total = f"{currency_symbol}{product['total']}"
+        pdf.cell(column_widths[5], 8, total, 0, 1, 'R')
+        
+        # Separator line after each product
+        pdf.line(pdf.l_margin, pdf.get_y(), pdf.w - pdf.r_margin, pdf.get_y())
+        
+        total_amount += float(product['total'])
 
-    pdf.set_font('poppins-medium', size=9)  # Reduced from 10
-    formatted_total_amount = f"{currency}{total_amount:.2f}"
-    pdf.cell(column_widths[4], 8, "Total Amount", border=0, align='L')  # Reduced height from 10 to 8
+    # Total amount row
+    pdf.set_font('poppins-medium', size=8)
+    pdf.cell(sum(column_widths[:5]), 8, "Total Amount", 0, 0, 'R')
+    formatted_total_amount = f"{currency_symbol}{total_amount:.2f}"
+    pdf.cell(column_widths[5], 8, formatted_total_amount, 0, 1, 'R')
     
-    for i in range(3):
-        pdf.cell(column_widths[i], 8, "", border=0)
-    
-    pdf.cell(column_widths[4], 8, formatted_total_amount, border=0, align='R')
-    pdf.ln(8)
-    
-    end_y = pdf.get_y()
-    pdf.line(10, end_y, 10 + page_width, end_y)
+    # Final separator line
+    pdf.line(pdf.l_margin, pdf.get_y(), pdf.w - pdf.r_margin, pdf.get_y())
 
-    pdf.ln(6)  # Reduced from 10
-    pdf.set_font('poppins-regular', size=7)  # Reduced from 8
+    pdf.ln(6)
+    pdf.set_font('poppins-regular', size=7)
     pdf.multi_cell(0, 4, "Thank you for your order! For questions about this order, please contact our customer support at support@web3dprint.com", 0, 'L')
-    pdf.ln(3)  # Reduced from 5
+    pdf.ln(3)
     pdf.multi_cell(0, 4, "For more information about our services and policies, please visit our website at WEB3DPRINT.COM", 0, 'L')
 
 @app.route('/generate_pdf', methods=['POST', 'OPTIONS'])
@@ -184,7 +197,8 @@ def generate_pdf_api():
         date_of_order = json_data.get('date_of_order', '')
         payment_terms = json_data.get('payment_terms', '')
         products = json_data.get('products', [])
-        currency = json_data.get('currency', '£')  # Default to GBP if not provided
+        currency = json_data.get('currency', 'GBP') 
+        currency_symbol = json_data.get('currency_symbol', '£')
 
         # Extract new delivery information
         delivery_method = json_data.get('delivery_method', 'Standard Shipping')
@@ -199,8 +213,9 @@ def generate_pdf_api():
         pdf = setup_pdf()
         add_header(pdf)
         add_customer_info(pdf, full_name, address, order_id, date_of_order, payment_terms, currency)
+        add_order_summary(pdf, products, currency, currency_symbol)
         add_delivery_info(pdf, delivery_method, estimated_delivery_date, shipping_address, tracking_number, special_instructions)
-        add_order_summary(pdf, products, currency)
+
         pdf.output(temp_filename)
 
         return send_file(
