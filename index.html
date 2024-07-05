@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF Generator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+        .container {
+            text-align: center;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        #status {
+            margin-top: 20px;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>PDF Generator</h1>
+        <button id="generatePdf">Generate PDF</button>
+        <p id="status"></p>
+    </div>
+
+    <script>
+        document.getElementById('generatePdf').addEventListener('click', function() {
+            const statusElement = document.getElementById('status');
+            statusElement.textContent = 'Generating PDF...';
+
+            // Sample order data - replace with actual data as needed
+            const orderData = {
+                "full_name": "OLIVER LESLIE BARROW",
+                "address": "6 Lewis Cubitt Walk\nKings Cross, London\nN1C 4DT",
+                "order_id": "65d350e0c6e3be",
+                "date_of_order": "12/08/2024",
+                "payment_terms": "Apple Pay",
+                "products": [
+                    {"name": "Custom Phone Stand", "quantity": 2, "unit_price": "£15.99", "tax": "£6.40", "total": "£38.38"},
+                    {"name": "Decorative Vase", "quantity": 1, "unit_price": "£29.50", "tax": "£5.90", "total": "£35.40"},
+                    {"name": "3D Printed Chess Set", "quantity": 1, "unit_price": "£49.99", "tax": "£10.00", "total": "£59.99"},
+                    {"name": "Personalized Pet Tag", "quantity": 3, "unit_price": "£9.99", "tax": "£6.00", "total": "£35.97"}
+                ]
+            };
+
+            fetch('http://192.168.1.182:8080/generate_pdf', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(orderData),
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.blob();
+            })
+            .then(blob => {
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.style.display = 'none';
+                a.href = url;
+                a.download = 'invoice.pdf';
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                statusElement.textContent = 'PDF generated and downloaded successfully!';
+            })
+            .catch((error) => {
+                console.error('Error:', error);
+                statusElement.textContent = 'Error generating PDF. Please try again.';
+            });
+        });
+    </script>
+</body>
+</html>

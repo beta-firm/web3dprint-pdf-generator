@@ -1,4 +1,5 @@
-from flask import Flask, request, send_file
+from flask import Flask, request, send_file, make_response
+from flask_cors import CORS
 from fpdf import FPDF
 import os
 from time import strftime
@@ -6,6 +7,7 @@ import json
 import tempfile
 
 app = Flask(__name__)
+CORS(app)
 
 class PDF(FPDF):
     def footer(self):
@@ -99,52 +101,58 @@ def add_order_summary(pdf, products):
         end_y = pdf.get_y()
         pdf.line(10, end_y, 10 + page_width, end_y)
 
-    # Add Total Amount row
     pdf.set_font('poppins-regular', size=8)
     formatted_total_amount = "£" + "{:.2f}".format(total_amount)
     pdf.cell(column_widths[4], 10, "Total Amount", border=0, align='L')
     
-    # Empty cells for Product, Quantity, Price, and Tax columns
     for i in range(3):
         pdf.cell(column_widths[i], 10, "", border=0)
     
-    # Total Amount in the last column
     pdf.cell(column_widths[4], 10, formatted_total_amount, border=0, align='R')
     pdf.ln(10)
     
-    # Draw a line after the Total Amount
     end_y = pdf.get_y()
     pdf.line(10, end_y, 10 + page_width, end_y)
 
-@app.route('/generate_pdf', methods=['POST'])
+@app.route('/generate_pdf', methods=['POST', 'OPTIONS'])
 def generate_pdf_api():
-    # Get JSON data from the request
-    json_data = request.json
+    if request.method == "OPTIONS":  # CORS preflight
+        return build_preflight_response()
+    elif request.method == "POST":
+        json_data = request.json
 
-    if not json_data:
-        return "No JSON data provided", 400
+        if not json_data:
+            return "No JSON data provided", 400
 
-    # Extract information from JSON
-    full_name = json_data.get('full_name', '')
-    address = json_data.get('address', '')
-    order_id = json_data.get('order_id', '')
-    date_of_order = json_data.get('date_of_order', '')
-    payment_terms = json_data.get('payment_terms', '')
-    products = json_data.get('products', [])
+        full_name = json_data.get('full_name', '')
+        address = json_data.get('address', '')
+        order_id = json_data.get('order_id', '')
+        date_of_order = json_data.get('date_of_order', '')
+        payment_terms = json_data.get('payment_terms', '')
+        products = json_data.get('products', [])
 
-    # Create a temporary file to store the PDF
-    with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as tmp_file:
-        temp_filename = tmp_file.name
+        with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as tmp_file:
+            temp_filename = tmp_file.name
 
-    # Generate PDF
-    pdf = setup_pdf()
-    add_header(pdf)
-    add_customer_info(pdf, full_name, address, order_id, date_of_order, payment_terms)
-    add_order_summary(pdf, products)
-    pdf.output(temp_filename)
+        pdf = setup_pdf()
+        add_header(pdf)
+        add_customer_info(pdf, full_name, address, order_id, date_of_order, payment_terms)
+        add_order_summary(pdf, products)
+        pdf.output(temp_filename)
 
-    # Send the file
-    return send_file(temp_filename, as_attachment=True, download_name='invoice.pdf')
+        return send_file(
+            temp_filename,
+            as_attachment=True,
+            download_name=f'invoice_{order_id}.pdf',
+            mimetype='application/pdf'
+        )
+
+def build_preflight_response():
+    response = make_response()
+    response.headers.add("Access-Control-Allow-Origin", "*")
+    response.headers.add('Access-Control-Allow-Headers', "*")
+    response.headers.add('Access-Control-Allow-Methods', "*")
+    return response
 
 if __name__ == "__main__":
     app.run(debug=True, host='0.0.0.0', port=int(os.environ.get('PORT', 8080)))
