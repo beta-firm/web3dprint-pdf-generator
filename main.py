@@ -1,7 +1,11 @@
+from flask import Flask, request, send_file
 from fpdf import FPDF
 import os
 from time import strftime
 import json
+import tempfile
+
+app = Flask(__name__)
 
 class PDF(FPDF):
     def footer(self):
@@ -111,45 +115,36 @@ def add_order_summary(pdf, products):
     # Draw a line after the Total Amount
     end_y = pdf.get_y()
     pdf.line(10, end_y, 10 + page_width, end_y)
-    
 
-def generate_pdf(json_data):
-    # Load JSON data
-    data = json.loads(json_data)
+@app.route('/generate_pdf', methods=['POST'])
+def generate_pdf_api():
+    # Get JSON data from the request
+    json_data = request.json
+
+    if not json_data:
+        return "No JSON data provided", 400
 
     # Extract information from JSON
-    output_filename = data.get('output_filename', 'invoice.pdf')
-    full_name = data.get('full_name', '')
-    address = data.get('address', '')
-    order_id = data.get('order_id', '')
-    date_of_order = data.get('date_of_order', '')
-    payment_terms = data.get('payment_terms', '')
-    products = data.get('products', [])
+    full_name = json_data.get('full_name', '')
+    address = json_data.get('address', '')
+    order_id = json_data.get('order_id', '')
+    date_of_order = json_data.get('date_of_order', '')
+    payment_terms = json_data.get('payment_terms', '')
+    products = json_data.get('products', [])
+
+    # Create a temporary file to store the PDF
+    with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as tmp_file:
+        temp_filename = tmp_file.name
 
     # Generate PDF
     pdf = setup_pdf()
     add_header(pdf)
     add_customer_info(pdf, full_name, address, order_id, date_of_order, payment_terms)
     add_order_summary(pdf, products)
-    pdf.output(output_filename)
+    pdf.output(temp_filename)
+
+    # Send the file
+    return send_file(temp_filename, as_attachment=True, download_name='invoice.pdf')
 
 if __name__ == "__main__":
-    # Sample JSON input
-    json_input = '''
-    {
-        "output_filename": "JSON_INVOICE.pdf",
-        "full_name": "OLIVER LESLIE BARROW",
-        "address": "6 Lewis Cubitt Walk\\nKings Cross, London\\nN1C 4DT",
-        "order_id": "65d350e0c6e3be",
-        "date_of_order": "12/08/2024",
-        "payment_terms": "Apple Pay",
-        "products": [
-            {"name": "Custom Phone Stand", "quantity": 2, "unit_price": "£15.99", "tax": "£6.40", "total": "£38.38"},
-            {"name": "Decorative Vase", "quantity": 1, "unit_price": "£29.50", "tax": "£5.90", "total": "£35.40"},
-            {"name": "3D Printed Chess Set", "quantity": 1, "unit_price": "£49.99", "tax": "£10.00", "total": "£59.99"},
-            {"name": "Personalized Pet Tag", "quantity": 3, "unit_price": "£9.99", "tax": "£6.00", "total": "£35.97"}
-        ]
-    }
-    '''
-    generate_pdf(json_input)
-    
+    app.run(debug=True, host='0.0.0.0', port=int(os.environ.get('PORT', 8080)))
