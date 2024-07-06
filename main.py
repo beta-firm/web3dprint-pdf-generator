@@ -3,7 +3,6 @@ from flask_cors import CORS
 from fpdf import FPDF
 import os
 from time import strftime
-import json
 import tempfile
 
 app = Flask(__name__)
@@ -36,7 +35,8 @@ def add_header(pdf):
     half_page_width = page_width / 2
     pdf.set_font('poppins-medium', size=22)
     pdf.set_x(10)
-    pdf.cell(half_page_width, 10, "Web3DPrint", 0, 0, 'L')
+    # Assuming you want the image at the top left, adjust x, y, w, h as needed
+    pdf.image('assets/logo.png', 10, 18, 60)  # Example: 33 mm width, auto height
     pdf.set_x(10 + half_page_width)
     pdf.cell(half_page_width, 10, "Order Summary", 0, 1, 'R')
     pdf.set_font('poppins-regular', size=8)
@@ -112,11 +112,6 @@ def add_delivery_info(pdf, delivery_method, estimated_delivery_date, shipping_ad
 
 def add_order_summary(pdf, products, currency, currency_symbol):
     page_width = pdf.w - 2 * pdf.l_margin
-    
-    # Check if there's enough space on the current page
-    if pdf.get_y() > 180:  # Adjust this value as needed
-        pdf.add_page()
-    
     column_widths = [page_width * 0.25, page_width * 0.25, page_width * 0.1, page_width * 0.13, page_width * 0.13, page_width * 0.14]
     
     pdf.set_font('poppins-medium', size=10)
@@ -132,49 +127,42 @@ def add_order_summary(pdf, products, currency, currency_symbol):
         pdf.cell(column_widths[i], 8, header, 0, 0, alignments[i])
     pdf.ln(8)
     
-    # Separator line after headers
     pdf.line(pdf.l_margin, pdf.get_y(), pdf.w - pdf.r_margin, pdf.get_y())
     
     pdf.set_font('poppins-regular', size=7)
     pdf.set_line_width(0.25)
     
     total_amount = 0
+    items_on_current_page = 0
     for product in products:
-        # Product name
-        pdf.cell(column_widths[0], 8, product['name'], 0, 0, 'L')
+        if items_on_current_page >= 17:
+            pdf.add_page()
+            items_on_current_page = 0
         
-        # Description (material info)
+        pdf.cell(column_widths[0], 8, product['name'], 0, 0, 'L')
         material_info = f"{product['material']}, {product['color']}, {product['manufacturing_process']}, {product['finish']}"
         pdf.cell(column_widths[1], 8, material_info, 0, 0, 'L')
-        
-        # Quantity
         pdf.cell(column_widths[2], 8, str(product['quantity']), 0, 0, 'C')
-        
-        # Price
         pdf.cell(column_widths[3], 8, f"{currency_symbol}{product['unit_price']}", 0, 0, 'R')
-        
-        # Tax
         pdf.cell(column_widths[4], 8, f"{currency_symbol}{product['tax']}", 0, 0, 'R')
-        
-        # Total
         total = f"{currency_symbol}{product['total']}"
         pdf.cell(column_widths[5], 8, total, 0, 1, 'R')
         
-        # Separator line after each product
         pdf.line(pdf.l_margin, pdf.get_y(), pdf.w - pdf.r_margin, pdf.get_y())
         
         total_amount += float(product['total'])
-
-    # Total amount row
+        items_on_current_page += 1
+    
     pdf.set_font('poppins-medium', size=8)
     pdf.cell(sum(column_widths[:5]), 8, "Total Amount", 0, 0, 'R')
     formatted_total_amount = f"{currency_symbol}{total_amount:.2f}"
     pdf.cell(column_widths[5], 8, formatted_total_amount, 0, 1, 'R')
     
-    # Final separator line
     pdf.line(pdf.l_margin, pdf.get_y(), pdf.w - pdf.r_margin, pdf.get_y())
-
-    pdf.ln(6)
+    
+    pdf.ln(10)  # Ensure there's a gap before the footer regardless of the last item's position
+    
+    # Footer content
     pdf.set_font('poppins-regular', size=7)
     pdf.multi_cell(0, 4, "Thank you for your order! For questions about this order, please contact our customer support at support@web3dprint.com", 0, 'L')
     pdf.ln(3)
