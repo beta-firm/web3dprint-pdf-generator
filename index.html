@@ -396,7 +396,8 @@
   "special_instructions": "Please leave with neighbor if not home"
 };
 
-            fetch('http://192.168.1.182:8080/generate_pdf', {
+// Update the URL with the actual server URL where the PDF generation API is hosted
+            fetch('http://127.0.0.1:8080/generate_pdf', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

@@ -26,6 +26,7 @@ def setup_pdf():
     font_path = os.path.join(os.path.dirname(__file__), 'fonts')
     pdf.add_font('poppins-bold', '', os.path.join(font_path, 'Poppins-Bold.ttf'))
     pdf.add_font('poppins-medium', '', os.path.join(font_path, 'Poppins-Medium.ttf'))
+    pdf.add_font('poppins-semibold', '', os.path.join(font_path, 'Poppins-SemiBold.ttf'))
     pdf.add_font('poppins-regular', '', os.path.join(font_path, 'Poppins-Regular.ttf'))
     return pdf
 
@@ -33,7 +34,7 @@ def add_header(pdf):
     pdf.ln(10)  # Add a 10mm space at the top
     page_width = pdf.w - 2 * pdf.l_margin
     half_page_width = page_width / 2
-    pdf.set_font('poppins-medium', size=22)
+    pdf.set_font('poppins-semibold', size=22)
     pdf.set_x(10)
     # Assuming you want the image at the top left, adjust x, y, w, h as needed
     pdf.image('assets/logo.png', 10, 18, 60)  # Example: 33 mm width, auto height
@@ -164,8 +165,8 @@ def add_order_summary(pdf, products, currency, currency_symbol):
     
     # Footer content
     pdf.set_font('poppins-regular', size=7)
-    pdf.multi_cell(0, 4, "Thank you for your order! For questions about this order, please contact our customer support at support@web3dprint.com", 0, 'L')
-    pdf.ln(3)
+    pdf.multi_cell(0, 1, "Thank you for your order! For questions about this order, please contact our customer support at support@web3dprint.com", 0, 'L')
+    pdf.ln(2)
     pdf.multi_cell(0, 4, "For more information about our services and policies, please visit our website at WEB3DPRINT.COM", 0, 'L')
 
 @app.route('/generate_pdf', methods=['POST', 'OPTIONS'])
